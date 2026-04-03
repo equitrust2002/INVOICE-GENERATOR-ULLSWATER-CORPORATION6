@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ULLSWATER | TOTAL MIRROR SYSTEM</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        :root { --primary: #1a2a3a; --border: #000; --bg: #f8fafc; --success: #27ae60; --danger: #c0392b; --info: #2980b9; --warn: #f39c12; --purple: #8e44ad;}
+        * { box-sizing: border-box; -webkit-print-color-adjust: exact; }
+        
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: var(--bg); margin: 0; padding: 10px; color: #111; }
+        
+        /* A4 Container Logic */
+        .form-container { 
+            width: 100%; max-width: 210mm; min-height: 297mm; 
+            background: white; margin: 0 auto; padding: 12mm; 
+            border: 1px solid #000; position: relative; box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+        }
+
+        .header { display: flex; flex-wrap: wrap; justify-content: space-between; border-bottom: 5px solid var(--primary); padding-bottom: 15px; margin-bottom: 25px; gap: 15px; }
+        .corp-title { font-weight: 900; font-size: 28px; width: 100%; border: none; color: var(--primary); text-transform: uppercase; letter-spacing: 2px; }
+        
+        #qrcode-container { border: 2px solid #000; padding: 10px; background: #fff; text-align: center; width: 220px; margin: 0 auto; }
+        #qrcode img { margin: 0 auto; display: block; max-width: 100%; }
+        .qr-label { font-size: 10px; font-weight: bold; margin-top: 8px; text-transform: uppercase; color: var(--primary); border-top: 1px solid #eee; padding-top: 5px; letter-spacing: 1px; }
+
+        .table-responsive { width: 100%; margin-top: 15px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        table { width: 100%; border-collapse: collapse; table-layout: fixed; min-width: 850px; }
+        th, td { border: 1px solid var(--border); padding: 10px; font-size: 11px; word-wrap: break-word; vertical-align: top; }
+        .bg-blue { background: var(--primary); color: white; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
+        
+        input, textarea { width: 100%; border: none; outline: none; font-family: inherit; font-size: 13px; background: transparent; padding: 4px; display: block; -webkit-appearance: none; border-radius: 0; }
+        textarea { resize: none; overflow: hidden; min-height: 35px; line-height: 1.5; white-space: pre-wrap; height: auto; }
+        
+        .grand-total-row { background: #f9f9f9; font-weight: bold; font-size: 17px; border-top: 2px solid #000; }
+
+        .footer-grid { display: grid; grid-template-columns: 1fr; gap: 30px; margin-top: 40px; }
+        @media (min-width: 768px) { .footer-grid { grid-template-columns: 1.5fr 1fr; } }
+
+        .notes-box { border: 1px solid #ddd; padding: 12px; border-radius: 4px; background: #fafafa; }
+        .sig-line { border-top: 2px solid #000; margin-top: 60px; padding-top: 10px; text-align: center; font-weight: bold; font-size: 14px; text-transform: uppercase; }
+
+        /* BUTTONS - Optimized for Mobile Taps */
+        .controls { width: 100%; max-width: 210mm; margin: 25px auto; text-align: center; display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; padding-bottom: 80px; }
+        
+        button { 
+            padding: 16px 5px; cursor: pointer; border: none; color: white; font-weight: bold; 
+            border-radius: 10px; font-size: 11px; text-transform: uppercase; 
+            touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+        }
+
+        .btn-add { background: var(--primary); width: 100%; margin-top: 15px; padding: 20px; font-size: 14px; border-radius: 4px; }
+        .btn-print { background: var(--success); }
+        .btn-csv { background: var(--warn); }
+        .btn-json { background: var(--purple); }
+        .btn-bulk { background: var(--info); }
+        .btn-reset { background: var(--danger); }
+        .btn-del { background: var(--danger); width: 30px; height: 30px; border-radius: 50%; padding: 0; display: flex; align-items: center; justify-content: center; }
+
+        /* PROFESSIONAL PRINT STYLES */
+        @media print { 
+            @page { size: A4; margin: 0; }
+            body { background: white; padding: 0; margin: 0; }
+            .no-print, .controls, .btn-add, .action-col, .btn-del { display: none !important; }
+            .form-container { border: none; box-shadow: none; width: 100%; padding: 15mm; margin: 0; }
+            .notes-box { background: white; border-color: #000; border-radius: 0; }
+            input, textarea { padding: 0; font-size: 12px; }
+            .bg-blue { background: #f0f0f0 !important; color: #000 !important; border-bottom: 2px solid #000; }
+            .grand-total-row { background: white !important; }
+            .header { border-bottom-width: 3px; }
+            table { min-width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="form-container">
+    <div class="header">
+        <div style="flex: 1; min-width: 260px;">
+            <input type="text" id="corpName" class="corp-title" value="ULLSWATER CORPORATION">
+            <input type="text" id="corpSub" value="OFFICIAL INVOICE" style="letter-spacing: 5px; font-weight: bold; font-size: 16px; color: #444;">
+            <div style="margin-top: 30px; font-weight: bold; font-size: 15px;">
+                INVOICE NO: <input type="text" id="invNo" style="width: 230px; border-bottom: 2px solid var(--primary); font-weight: 900;" placeholder="ULW-2026-000">
+            </div>
+        </div>
+        <div id="qrcode-container">
+            <div id="qrcode"></div>
+            <div class="qr-label">FULL SYSTEM MIRROR</div>
+        </div>
+    </div>
+
+    <table style="width: 100%;">
+        <tr>
+            <td style="width: 50%;"><strong>DATE:</strong> <input type="date" id="invDate"></td>
+            <td style="width: 50%;"><strong>CLIENT TIN:</strong> <input type="text" id="clientTin" placeholder="000-000-000-000"></td>
+        </tr>
+        <tr>
+            <td colspan="2">
+                <strong>BILL TO:</strong>
+                <textarea id="clientName" placeholder="Client Name & Registered Business Address..." style="font-weight: 700; margin-top: 5px; font-size: 14px;"></textarea>
+            </td>
+        </tr>
+    </table>
+
+    <div class="table-responsive">
+        <table id="invTable">
+            <thead>
+                <tr class="bg-blue">
+                    <th style="width: 18%;">Source</th>
+                    <th style="width: 28%;">Description</th>
+                    <th style="width: 9%;">Qty</th>
+                    <th style="width: 12%;">Price</th>
+                    <th style="width: 11%;">Deduct</th>
+                    <th style="width: 15%;">Total</th>
+                    <th class="action-col" style="width: 45px;"></th>
+                </tr>
+            </thead>
+            <tbody id="invBody"></tbody>
+            <tfoot>
+                <tr class="grand-total-row">
+                    <td colspan="5" style="text-align: right; padding-right: 15px;">GRAND TOTAL (PHP):</td>
+                    <td id="grandTotal" style="text-align: center; color: var(--primary); font-size: 17px;">0.00</td>
+                    <td class="action-col"></td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+    
+    <button type="button" class="btn-add no-print" id="addRowBtn">+ ADD LINE ITEM</button>
+
+    <div class="footer-grid">
+        <div class="notes-box">
+            <div style="font-size: 10px; font-weight: bold; text-transform: uppercase; margin-bottom: 5px;">Accounting Notes:</div>
+            <textarea id="invNotes" placeholder="Payment terms, logistics references, or bank details..."></textarea>
+        </div>
+        <div style="display: flex; flex-direction: column; justify-content: flex-end;">
+            <div class="sig-line">
+                <input type="text" id="signatoryName" value="AUTHORIZED SIGNATORY" style="text-align: center; font-weight: bold;">
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="controls no-print">
+    <button type="button" class="btn-print" id="printBtn">PRINT PDF</button>
+    <button type="button" class="btn-csv" id="csvBtn">SAVE CSV</button>
+    <button type="button" class="btn-json" id="jsonBtn">SAVE JSON</button>
+    <button type="button" class="btn-bulk" id="bulkBtn">BULK LOAD</button>
+    <button type="button" class="btn-reset" id="resetBtn">CLEAR FORM</button>
+    <input type="file" id="bulkInput" style="display:none" multiple>
+</div>
+
+<script>
+    const qrDiv = document.getElementById("qrcode");
+
+    function autoExpand(el) {
+        if (!el) return;
+        el.style.height = 'auto';
+        el.style.height = (el.scrollHeight) + 'px';
+    }
+
+    function addRow(src="", d="", q=0, p=0, ded=0) {
+        const tbody = document.getElementById('invBody');
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td><textarea class="src" style="text-align:center; font-size:10px; font-weight:600;">${src}</textarea></td>
+            <td><textarea class="desc" style="font-size:11px;">${d}</textarea></td>
+            <td><input type="text" class="qty" value="${q}" inputmode="decimal" style="text-align:center;"></td>
+            <td><input type="text" class="price" value="${p}" inputmode="decimal" style="text-align:center;"></td>
+            <td><input type="text" class="deduct" value="${ded}" inputmode="decimal" style="text-align:center;"></td>
+            <td class="row-total" style="font-weight:bold; text-align:center;">0.00</td>
+            <td class="action-col" style="text-align:center;"><button type="button" class="btn-del">✕</button></td>
+        `;
+        tbody.appendChild(tr);
+
+        tr.querySelectorAll('input, textarea').forEach(input => {
+            input.addEventListener('input', () => {
+                if (input.tagName === 'TEXTAREA') autoExpand(input);
+                calc();
+            });
+        });
+
+        tr.querySelector('.btn-del').addEventListener('click', () => { tr.remove(); calc(); });
+        setTimeout(() => tr.querySelectorAll('textarea').forEach(autoExpand), 50);
+        calc();
+    }
+
+    function calc() {
+        let grand = 0;
+        document.querySelectorAll('#invBody tr').forEach(r => {
+            let q = parseFloat(r.querySelector('.qty').value.replace(/,/g,'')) || 0;
+            let p = parseFloat(r.querySelector('.price').value.replace(/,/g,'')) || 0;
+            let d = parseFloat(r.querySelector('.deduct').value.replace(/,/g,'')) || 0;
+            let total = (q * p) - d;
+            r.querySelector('.row-total').innerText = total.toLocaleString(undefined, {minimumFractionDigits: 2});
+            grand += total;
+        });
+        document.getElementById('grandTotal').innerText = grand.toLocaleString(undefined, {minimumFractionDigits: 2});
+        updateQRCode();
+        saveData();
+    }
+
+    function getFormData() {
+        return {
+            corp: document.getElementById('corpName').value,
+            inv: document.getElementById('invNo').value,
+            date: document.getElementById('invDate').value,
+            tin: document.getElementById('clientTin').value,
+            client: document.getElementById('clientName').value,
+            notes: document.getElementById('invNotes').value,
+            sig: document.getElementById('signatoryName').value,
+            total: document.getElementById('grandTotal').innerText,
+            items: Array.from(document.querySelectorAll('#invBody tr')).map(r => ({
+                src: r.querySelector('.src').value,
+                d: r.querySelector('.desc').value,
+                q: r.querySelector('.qty').value,
+                p: r.querySelector('.price').value,
+                ded: r.querySelector('.deduct').value,
+                rowTotal: r.querySelector('.row-total').innerText
+            }))
+        };
+    }
+
+    function updateQRCode() {
+        const d = getFormData();
+        let h = `[HDR]|${d.corp}|${d.inv}|${d.date}|TIN:${d.tin}|CLNT:${d.client.substring(0,35)}\n`;
+        let iRows = d.items.map(i => `[ITM]|${i.src.substring(0,10)}|${i.d.substring(0,25)}|${i.q}|${i.p}|${i.ded}|${i.rowTotal}`).join('\n');
+        let fullMirror = h + iRows + `\nTOTAL:PHP ${d.total}`;
+        
+        qrDiv.innerHTML = "";
+        new QRCode(qrDiv, { text: fullMirror.substring(0, 2500), width: 220, height: 220, correctLevel: QRCode.CorrectLevel.L });
+    }
+
+    function saveData() {
+        localStorage.setItem('ULLSWATER_TOTAL_MIRROR_V12', JSON.stringify(getFormData()));
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('addRowBtn').addEventListener('click', () => addRow());
+        document.getElementById('printBtn').addEventListener('click', () => window.print());
+        document.getElementById('resetBtn').addEventListener('click', () => {
+            if(confirm("Clear current form?")) { localStorage.removeItem('ULLSWATER_TOTAL_MIRROR_V12'); location.reload(); }
+        });
+
+        document.getElementById('bulkBtn').addEventListener('click', () => document.getElementById('bulkInput').click());
+        
+        document.getElementById('bulkInput').addEventListener('change', async (e) => {
+            for (let file of e.target.files) {
+                const text = await file.text();
+                try {
+                    const data = JSON.parse(text);
+                    if (data.items) {
+                        data.items.forEach(item => {
+                            const auditSource = `[${data.date || '??'}][#${data.inv || '??'}] ${item.src || ''}`.trim();
+                            addRow(auditSource, item.d, item.q, item.p, item.ded);
+                        });
+                    }
+                } catch(err) { alert("Invalid File Format"); }
+            }
+            e.target.value = '';
+            calc();
+        });
+
+        document.getElementById('jsonBtn').addEventListener('click', () => {
+            const blob = new Blob([JSON.stringify(getFormData(), null, 2)], { type: 'application/json' });
+            const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+            a.download = `INV_${document.getElementById('invNo').value || 'DRAFT'}.json`; a.click();
+        });
+
+        document.getElementById('csvBtn').addEventListener('click', () => {
+            const d = getFormData();
+            let csv = "INV,DATE,CLIENT_TIN,CLIENT_NAME,SOURCE,DESCRIPTION,QTY,PRICE,DEDUCT,TOTAL\n";
+            d.items.forEach(i => {
+                csv += `"${d.inv}","${d.date}","${d.tin}","${d.client.replace(/\n/g,' ')}","${i.src.replace(/\n/g,' ')}","${i.d.replace(/\n/g,' ')}","${i.q}","${i.p}","${i.ded}","${i.rowTotal}"\n`;
+            });
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+            a.download = `ULLSWATER_EXACT_${d.inv || 'DRAFT'}.csv`; a.click();
+        });
+
+        const saved = JSON.parse(localStorage.getItem('ULLSWATER_TOTAL_MIRROR_V12'));
+        if(saved) {
+            document.getElementById('invNo').value = saved.inv || "";
+            document.getElementById('invDate').value = saved.date || "";
+            document.getElementById('clientTin').value = saved.tin || "";
+            document.getElementById('clientName').value = saved.client || "";
+            document.getElementById('invNotes').value = saved.notes || "";
+            document.getElementById('signatoryName').value = saved.sig || "AUTHORIZED SIGNATORY";
+            if (saved.items && saved.items.length > 0) {
+                saved.items.forEach(i => addRow(i.src, i.d, i.q, i.p, i.ded));
+            } else { addRow(); }
+        } else {
+            addRow();
+            document.getElementById('invDate').valueAsDate = new Date();
+        }
+
+        document.querySelectorAll('textarea').forEach(t => autoExpand(t));
+        setTimeout(calc, 300);
+    });
+
+    window.onbeforeprint = () => {
+        document.querySelectorAll('textarea').forEach(t => {
+            t.style.height = 'auto';
+            t.style.height = t.scrollHeight + 'px';
+        });
+    };
+</script>
+</body>
+</html>
